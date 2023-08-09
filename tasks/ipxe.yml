@@ -1,0 +1,71 @@
+---
+
+- name: "Install packages"
+  ansible.builtin.apt: 
+    name: "{{ item }}"
+    force: yes 
+    # update_cache: yes
+    # cache_valid_time: 3600
+  loop:
+    - git
+    - liblzma-dev
+
+- name: "prepare smart_proxy tftp iPXE"
+  ansible.builtin.git:
+    clone: true
+    repo: 'http://mirror.lab.loxda.net/git/ipxe/ipxe.git/'
+    dest: '/tmp/ipxe'
+    single_branch: true
+    update: true
+    force: true
+
+- name: "prepare smart_proxy tftp iPXE"
+  ansible.builtin.shell: |
+    cat <<EOF > /tmp/ipxe/src/default.ipxe
+    #!ipxe
+    dhcp
+    chain http://{{ groups['tfm_app'][0] }}/unattended/iPXE?bootstrap=1
+    EOF
+
+- name: "prepare smart_proxy tftp iPXE"
+  ansible.builtin.shell: |
+    # Enable FTP Support in iPXE
+    sed -i -e 's/#undef\s*DOWNLOAD_PROTO_FTP/#define DOWNLOAD_PROTO_FTP/g' /tmp/ipxe/src/config/general.h
+    # Enable HTTPS Support in iPXE
+    sed -i -e 's/#undef\s*DOWNLOAD_PROTO_HTTPS/#define DOWNLOAD_PROTO_HTTPS/g' /tmp/ipxe/src/config/general.h
+
+- name: "Compile iPXE: ipxe.pxe, ipxe.efi, ipxe.lkrn"
+  ansible.builtin.shell: |
+    cd /tmp/ipxe/src/
+    make bin/ipxe.pxe EMBED=/tmp/ipxe/src/default.ipxe TRUST=/etc/puppetlabs/puppet/ssl/certs/ca.pem
+    make bin/ipxe.lkrn EMBED=/tmp/ipxe/src/default.ipxe TRUST=/etc/puppetlabs/puppet/ssl/certs/ca.pem
+    # Build the EFI bootloader first with embedded default.ipxe
+    make bin-x86_64-efi/ipxe.efi EMBED=/tmp/ipxe/src/default.ipxe TRUST=/etc/puppetlabs/puppet/ssl/certs/ca.pem
+    make bin-x86_64-efi/snp.efi EMBED=/tmp/ipxe/src/default.ipxe TRUST=/etc/puppetlabs/puppet/ssl/certs/ca.pem
+    cp bin/ipxe.pxe /srv/tftp/
+    cp bin/ipxe.lkrn /srv/tftp/
+    cp bin-x86_64-efi/ipxe.efi /srv/tftp/
+    cp bin-x86_64-efi/snp.efi /srv/tftp/
+
+- name: "prepare smart_proxy tftp iPXE"
+  ansible.builtin.shell: |
+    # The ESXi Legacy BIOS bootloader mboot.c32 needs COMBOOT enabled in iPXE
+    sed -i -e 's/\/\/#define\s*IMAGE_COMBOOT/#define       IMAGE_COMBOOT/g' /tmp/ipxe/src/config/general.h
+
+- name: "Compile iPXE: undionly.kpxe"
+  ansible.builtin.shell: |
+    cd /tmp/ipxe/src
+    # Build the Legacy BIOS Bootloader
+    make bin/undionly.kpxe EMBED=default.ipxe TRUST=/etc/puppetlabs/puppet/ssl/certs/ca.pem
+    # Copy bootloaders to TFTP root
+    cp bin/undionly.kpxe /srv/tftp/
+
+- name: Cleanup archive files
+  block:
+    - ansible.builtin.stat:
+        path: /tmp/ipxe
+      register: tmpipxedir
+    - ansible.builtin.file:
+        path: /tmp/ipxe
+        state: absent
+      when: tmpipxedir.stat.exists

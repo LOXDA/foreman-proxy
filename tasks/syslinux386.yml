@@ -1,0 +1,32 @@
+---
+
+# deploy syslinux-3.86 (vmware support only this version, works well with everything else)
+
+- name: Download syslinux-3.86.tar.gz archive from mirror
+  get_url:
+    url: http://mirror.lab.loxda.net/foreman/syslinux-3.86.tar.gz
+    dest: /tmp/syslinux-3.86.tar.gz
+
+- name: "Prepare pxelinux.0 & *.c32 from syslinux-3.86"
+  ansible.builtin.shell: |
+    cd /tmp
+    tar xfz syslinux-3.86.tar.gz
+    cp /tmp/syslinux-3.86/core/pxelinux.0 /srv/tftp/
+    find /tmp/syslinux-3.86/com32/ -name \*.c32 -exec cp {} /srv/tftp/ \;
+
+- name: Cleanup archive files
+  block:
+    - ansible.builtin.stat:
+        path: /tmp/syslinux-3.86.tar.gz
+      register: tmpsyslinux386tar
+    - ansible.builtin.file:
+        path: /tmp/syslinux-3.86.tar.gz
+        state: absent
+      when: tmpsyslinux386tar.stat.exists
+    - ansible.builtin.stat:
+        path: /tmp/syslinux-3.86
+      register: tmpsyslinux386dir
+    - ansible.builtin.file:
+        path: /tmp/syslinux-3.86
+        state: absent
+      when: tmpsyslinux386dir.stat.exists

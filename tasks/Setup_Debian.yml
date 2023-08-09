@@ -1,0 +1,162 @@
+---
+
+- name: Disable thp
+  ansible.builtin.shell: |
+      echo never > /sys/kernel/mm/transparent_hugepage/enabled
+      echo never > /sys/kernel/mm/transparent_hugepage/defrag
+      echo 0 > /proc/sys/vm/compaction_proactiveness
+
+# - name: "Update CA Certificates"
+#   ansible.builtin.apt:
+#     name: ca-certificates
+#     update_cache: yes
+
+- name: Install Puppet Repository
+  block:
+    - name: Add Public Key
+      ansible.builtin.apt_key:
+        url: http://mirror.lab.loxda.net/keyrings/puppetlabs/keys.d/puppetlabs-keyring.key
+        state: present
+    - name: Install Puppet Repo
+      ansible.builtin.apt_repository:
+        repo: deb http://mirror.lab.loxda.net/puppetlabs/ {{ ansible_distribution_release }} {{ puppet_version }}
+        state: present
+        filename: /etc/apt/sources.list.d/{{ puppet_version }}.list
+
+# - name: Install Foreman Repository
+#   block:
+#     - name: Add Public Key
+#       ansible.builtin.apt_key:
+#         url: http://mirror.lab.loxda.net/keyrings/foreman/keys.d/foreman-keyring.key
+#         state: present
+#     - name: Install Foreman Repo
+#       ansible.builtin.apt_repository:
+#         repo: deb http://mirror.lab.loxda.net/foreman/ {{ ansible_distribution_release }} {{ foreman_version }}
+#         state: present
+#         filename: /etc/apt/sources.list.d/foreman.list
+#     - name: Install Foreman Plugin Repo
+#       ansible.builtin.apt_repository:
+#         repo: deb http://mirror.lab.loxda.net/foreman/ plugins {{ foreman_version }}
+#         state: present
+#         filename: /etc/apt/sources.list.d/foreman_plugins.list
+
+- name: "Install Git"
+  ansible.builtin.apt: 
+    name: git 
+    force: yes 
+    # update_cache: yes
+    # cache_valid_time: 3600
+    allow_unauthenticated: true
+
+- name: "Download Foreman installer package"
+  ansible.builtin.apt:
+    name: foreman-installer
+    force: yes
+    # update_cache: yes
+    # cache_valid_time: 3600
+    allow_unauthenticated: true
+
+- name: "Install Puppet Agent"
+  ansible.builtin.apt: 
+    name: puppet-agent 
+    force: yes 
+    # update_cache: yes
+    # cache_valid_time: 3600
+    allow_unauthenticated: true
+    
+- name: "Bootstap Puppet Agent ssl"
+  ansible.builtin.shell: |
+    /opt/puppetlabs/bin/puppet config set server {{ groups['tfm_puppet'][0] }} --section main
+    /opt/puppetlabs/bin/puppet ssl bootstrap --server {{ groups['tfm_puppet'][0] }}
+
+- name: "Install and Configure Puppet Root CA"
+  block:
+    - name: "Fetch Puppet Root CA"
+      ansible.builtin.shell: |
+        echo quit | openssl s_client -showcerts -servername server -connect {{ groups['tfm_puppet'][0] }}:8140 > /usr/local/share/ca-certificates/{{ groups['tfm_puppet'][0] }}-CA.crt 2>&1
+      args:
+        executable: /bin/bash  
+    - name: "Install Puppet Root CA"
+      ansible.builtin.shell: |
+        update-ca-certificates --fresh
+      args:
+        executable: /bin/bash  
+
+- name: Ensure group "puppet" exists
+  ansible.builtin.group:
+    name: puppet
+    state: present
+
+- name: Ensure group "foreman-proxy" exists
+  ansible.builtin.group:
+    name: foreman-proxy
+    state: present
+
+- name: Creates directory /etc/bind
+  ansible.builtin.file:
+    path: /etc/bind
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0750
+
+- name: Creating file /etc/bind/rndc.key
+  ansible.builtin.copy:
+    dest: /etc/bind/rndc.key
+    content: |
+      key "foreman" {
+              algorithm hmac-md5;
+              secret "tUJGI0Gd5xJokIvxqpo2oA==";
+      };
+    owner: root
+    group: foreman-proxy
+    mode: 0640
+
+- name: "Install and Configure Foreman PROXY"
+  block:
+    - name: "Install Foreman PROXY"
+      vars:
+        argv_start:
+        - foreman-installer
+        - --no-enable-foreman
+        - --no-enable-puppet
+        - --no-enable-foreman-plugin-puppet 
+        - --no-enable-foreman-cli-puppet
+        - --enable-foreman-proxy
+        - --puppet-group=root
+        - --puppet-codedir="/etc/puppetlabs/code"
+      ansible.builtin.shell: |
+        {{ argv_start | join(' ') }} \
+        {{ foreman_cmd_options | join(' ') }}
+      args:
+        executable: /bin/bash
+
+    - name: Restart service foreman-proxy
+      ansible.builtin.service:
+        name: foreman-proxy
+        state: restarted
+
+- name: Creates directory /etc/ansible
+  ansible.builtin.file:
+    path: /etc/ansible
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0750
+
+- name: Creating empty file /etc/ansible/ansible.cfg
+  ansible.builtin.copy:
+    dest: /etc/ansible/ansible.cfg
+    content: ""
+    owner: root
+    group: foreman-proxy
+    mode: 0640
+
+- name: "Bootstap Puppet Agent ssl"
+  ansible.builtin.shell: |
+    /opt/puppetlabs/bin/puppet config set server {{ groups['tfm_puppet'][0] }} --section main
+
+- name: Restart service puppet
+  ansible.builtin.service:
+    name: puppet
+    state: restarted

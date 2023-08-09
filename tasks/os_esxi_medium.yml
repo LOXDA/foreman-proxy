@@ -1,0 +1,85 @@
+---
+
+- name: Create temporary NFS mount dir
+  ansible.builtin.tempfile:
+    state: directory
+  register: nfsmount
+
+- name: Mount NFS for OS ESXi
+  ansible.posix.mount:
+    src: "{{ outer_item.nfshost }}:{{ outer_item.nfspath }}"
+    path: "{{ nfsmount.path }}"
+    fstype: nfs
+    opts: ro,async,hard
+    boot: false
+    state: mounted
+
+- name: Create temporary ISO mount dir
+  ansible.builtin.tempfile:
+    state: directory
+  register: isomount
+
+- name: Mount ISO read-only
+  ansible.posix.mount:
+    src: "{{ nfsmount.path }}/{{ outer_item.file }}"
+    path: "{{ isomount.path }}"
+    fstype: iso9660
+    opts: ro
+    boot: false
+    state: mounted
+
+- name: Create distro directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ esxipath }}/{{ outer_item.name }}"
+    state: directory
+    mode: 0755
+
+- name: Synchronize ISO to OS directorie on remote host
+  ansible.posix.synchronize:
+    src: "{{ isomount.path }}/"
+    dest: "{{ esxipath }}/{{ outer_item.name }}/"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Unmount mounted ISO
+  ansible.posix.mount:
+    path: "{{ isomount.path }}"
+    state: unmounted
+
+- name: Unmount mounted NFS
+  ansible.posix.mount:
+    path: "{{ nfsmount.path }}"
+    state: unmounted
+
+- name: Synchronize ISO to OS directorie on remote host
+  ansible.posix.synchronize:
+    src: "{{ esxipath }}/{{ outer_item.name }}/boot.cfg"
+    dest: "{{ esxipath }}/boot-{{ outer_item.name }}.cfg"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: "Fix {{ item.name }} boot.cfg"
+  shell: |
+    sed -e "s#/##g" -e "s#^prefix=.*#prefix=esxi/{{ outer_item.name }}/#" -i {{ esxipath }}/boot-{{ outer_item.name }}.cfg
+  args: 
+    executable: /bin/bash
+
+# try with this for ipxe/httpboot
+#    mirrorfqdn="mirror.lab.loxda.net"
+#    #sed -e "s#/##g" -e "s#^prefix=.*#prefix=http://${mirrorfqdn}:80/esxi/${isoesxi/.iso/}#" -i ${isodir}/boot-${isoesxi/.iso/}.cfg
+
+# - shell: |
+#     # prepare OS medium for ESXi
+#     #isodir="/home/esxi"
+#     #isonfspath="{{ item.nfshost }}:{{ item.nfspath }}/{{ item.file }}"
+#     #isoesxi=$(basename ${isonfspath})
+#     #nfsmount=$(mktemp -d /tmp/.tmp.esxi.XXXXXX)
+#     #tmpmount=$(mktemp -d /tmp/.tmp.esxi.XXXXXX)
+#     #mount -t nfs4 ${isonfspath/isoesxi/} ${nfsmount}
+#     #mount ${nfsmount}/${isoesxi} ${tmpmount}/
+#     #mkdir -p ${isodir}/${isoesxi/.iso/}
+#     #cp -rv ${tmpmount}/* ${isodir}/${isoesxi/.iso/}/
+#     #umount ${nfsmount} ; rm -r ${nfsmount}
+#     #umount ${tmpmount} ; rm -r ${tmpmount}
+#     #cp ${isodir}/${isoesxi/.iso/}/boot.cfg ${isodir}/boot-${isoesxi/.iso/}.cfg
+#     #sed -e "s#/##g" -e "s#^prefix=.*#prefix=esxi/${isoesxi/.iso/}/#" -i ${isodir}/boot-${isoesxi/.iso/}.cfg
+#   args:
+#     executable: /bin/bash

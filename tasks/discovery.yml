@@ -1,0 +1,16 @@
+---
+
+# - name: "download the latest foreman_discovery_image release"
+#   shell: |
+#     wget http://mirror.lab.loxda.net/foreman/fdi-image-latest.tar \
+#     -O - | tar x --overwrite -C /srv/tftp/boot
+
+- name: Cleanup archive files
+  block:
+    - ansible.builtin.stat:
+        path: /srv/tftp/boot/fdi-image-latest.tar
+      register: tmpfdiimagelatesttar
+    - ansible.builtin.file:
+        path: /srv/tftp/boot/fdi-image-latest.tar
+        state: absent
+      when: tmpfdiimagelatesttar.stat.exists

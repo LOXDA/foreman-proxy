@@ -1,0 +1,53 @@
+---
+
+- name: Create a directory if it does not exist
+  vars:
+    esxipath: "/srv/tftp/esxi"
+  ansible.builtin.file:
+    path: "{{ esxipath }}"
+    state: directory
+    mode: 0755
+
+- name: "Install packages"
+  ansible.builtin.apt: 
+    name: "{{ item }}"
+    force: yes 
+    # update_cache: yes
+    # cache_valid_time: 3600
+  loop:
+    - nfs-common
+    - rsync
+
+- name: "Prepare ESXi medium for {{ item.name }}"
+  include_tasks: "os_esxi_medium.yml"
+  loop: "{{ os_esxi_medium }}"
+  loop_control:
+    loop_var: outer_item
+  vars:
+    esxipath: "/srv/tftp/esxi"
+    os_esxi_medium:
+
+      - name: "ESXi-6.5.0-14320405"
+        file: "ESXi-6.5.0-14320405.iso"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/ESXi"
+
+      - name: "ESXi-6.7.0-15160138"
+        file: "ESXi-6.7.0-15160138.iso"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/ESXi"
+
+      - name: "ESXi-7.0.1-16850804"
+        file: "ESXi-7.0.1-16850804.iso"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/ESXi"
+
+      - name: "ESXi-7.0.3-19193900"
+        file: "ESXi-7.0.3-19193900.iso"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/ESXi"
+
+      - name: "ESXi-8.0.1-21495797"
+        file: "ESXi-8.0.1-21495797.iso"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/ESXi"

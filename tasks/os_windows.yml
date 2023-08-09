@@ -1,0 +1,48 @@
+---
+
+- name: Create a directory if it does not exist
+  vars:
+    wimpath: "/srv/tftp/wimimages"
+  ansible.builtin.file:
+    path: "{{ wimpath }}"
+    state: directory
+    mode: 0755
+
+- name: "Install packages"
+  ansible.builtin.apt: 
+    name: "{{ item }}"
+    force: yes 
+    # update_cache: yes
+    # cache_valid_time: 3600
+  loop:
+    - nfs-common
+    - rsync
+
+- name: "Prepare Windows medium for {{ outer_item.name }}"
+  include_tasks: "os_windows_medium.yml"
+  loop: "{{ os_windows_medium }}"
+  loop_control:
+    loop_var: outer_item
+  vars:
+    wimpath: "/srv/tftp/wimimages"
+    os_windows_medium:
+
+      - name: "Windows 10 LTSC"
+        dir: "10"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/wimimages/x86_64"
+
+      - name: "Windows 2016 Server"
+        dir: "2016"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/wimimages/x86_64"
+
+      - name: "Windows 2019 Server"
+        dir: "2019"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/wimimages/x86_64"
+
+      - name: "Windows 2022 Server"
+        dir: "2022"
+        nfshost: "172.16.202.10"
+        nfspath: "/nfs/wimimages/x86_64"

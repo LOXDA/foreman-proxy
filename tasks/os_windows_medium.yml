@@ -1,0 +1,50 @@
+---
+
+- name: Create temporary NFS mount dir
+  ansible.builtin.tempfile:
+    state: directory
+  register: nfsmount
+
+- name: Mount NFS for OS Windows
+  ansible.posix.mount:
+    src: "{{ outer_item.nfshost }}:{{ outer_item.nfspath }}"
+    path: "{{ nfsmount.path }}"
+    fstype: nfs
+    opts: ro,async,hard
+    boot: false
+    state: mounted
+
+- name: Create distro directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop:
+    - "{{ wimpath }}"
+    - "{{ wimpath }}/x86_64"
+
+- name: Synchronize WIM to OS directorie on remote host
+  ansible.posix.synchronize:
+    src: "{{ nfsmount.path }}/{{ outer_item.dir }}"
+    dest: "{{ wimpath }}/x86_64/"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Synchronize installables files & scripts
+  block:
+  - name: recurse nfspath
+    find:
+      path: "{{ nfsmount.path }}"
+      recurse: no
+      file_type: file
+    register: wimfiles
+  - name: copy files to tmp
+    copy:
+      remote_src: true
+      src: "{{ item.path }}"
+      dest: "{{ wimpath }}/x86_64/"
+    with_items: "{{ wimfiles.files }}"
+
+- name: Unmount mounted NFS
+  ansible.posix.mount:
+    path: "{{ nfsmount.path }}"
+    state: unmounted
