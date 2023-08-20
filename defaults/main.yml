@@ -1,3 +1,106 @@
 ---
-# defaults file for foreman-proxy
-ansible_os_family: Debian
+
+# defaults file for common
+foreman_version: 3.7
+puppet_version: puppet7
+
+# install options
+foreman_cmd_options: []
+foreman_plugins: []
+foreman_compute: []
+
+foreman_proxy_plugins:
+  - dynflow
+  - ansible
+  - remote-execution-script
+  - discovery
+
+# configure options
+foreman_options: {}
+foreman_plugin_options: {}
+foreman_compute_options: {}
+puppet_options: {}
+puppet_server_options: {}
+
+foreman_proxy_plugin_options:
+  dynflow-enabled: 'true'
+  dynflow-console-auth: 'true'
+  dynflow-database-path: '/var/lib/foreman-proxy/dynflow.sqlite3'
+  dynflow-listen-on: 'https'
+  ansible-listen-on: 'https'
+  ansible-ansible-dir: '/usr/share/foreman-proxy'
+  ansible-working-dir: '/tmp'
+  ansible-callback: 'theforeman.foreman.foreman'
+  ansible-host-key-checking: 'false'
+  ansible-roles-path: '/etc/ansible/roles'
+  ansible-collections-paths: '/etc/ansible/collections'
+  ansible-install-runner: 'true'
+  ansible-runner-package-name: 'python3-ansible-runner'
+  remote-execution-script-enabled: 'true'
+  remote-execution-script-listen-on: 'https'
+  remote-execution-script-cockpit-integration: 'false'
+  remote-execution-script-mode: 'ssh'
+  remote-execution-script-generate-keys: 'true'
+  remote-execution-script-local-working-dir: '/var/tmp'
+  remote-execution-script-remote-working-dir: '/var/tmp'
+  remote-execution-script-ssh-identity-dir: '/var/lib/foreman-proxy/ssh'
+  remote-execution-script-ssh-identity-file: 'id_rsa_foreman_proxy'
+  remote-execution-script-ssh-kerberos-auth: 'false'
+  remote-execution-script-ssh-keygen: '/usr/bin/ssh-keygen'
+  remote-execution-script-ssh-log-level: 'info'
+  discovery-tftp-root: '/srv/tftp'
+  discovery-install-images: 'true'
+  discovery-source-url: 'http://mirror.lab.loxda.net/foreman/'
+  discovery-listen-on: 'https'
+
+foreman_proxy_options:
+  oauth-consumer-key: "{{oauth_consumer_key|default(omit)}}"
+  oauth-consumer-secret: "{{oauth_consumer_secret|default(omit)}}"
+  manage-puppet-group: 'true'
+  register-in-foreman: 'true'
+  registered-name: "{{ inventory_hostname }}"
+  trusted-hosts: "{{ groups['tfm_app'][0] }}"
+  foreman-base-url: "https://{{ groups['tfm_app'][0] }}"
+  templates-listen-on: 'both'
+  dhcp: 'true'
+  dhcp-managed: 'true'
+  dhcp-key-name: 'omapikey'
+  dhcp-key-secret: 'Cx5gw+r4IDNQiz4HPaxa0ZdPGc3BhtDz7R1j7NsDhnYNEuZzQQcy+1280dO9CKogXQlh+1JEu5DGanX173MllQ=='
+  dhcp-omapi-port: '7911'
+  dhcp-ping-free-ip: 'true'
+  dhcp-option-domain: 'lab.loxda.net'
+  dhcp-ipxe-bootstrap: 'true' # discovery
+  dhcp-pxefilename: 'pxelinux.0'
+  dhcp-gateway: '172.16.203.253'
+  dhcp-nameservers: '172.16.203.253'
+  bmc: 'true'
+  bmc-default-provider: 'ipmitool'
+  bmc-listen-on: 'https'
+  bmc-redfish-verify-ssl: 'false'
+  dns: 'true'
+  dns-listen-on: 'https'
+  dns-managed: 'false'
+  dns-provider: 'nsupdate'
+  dns-zone: 'lab.loxda.net'
+  dns-server: '172.16.202.4'
+  dns-ttl: '3600'
+  keyfile: '/etc/bind/rndc.key'
+  logs-listen-on: 'https'
+  log: '/var/log/foreman-proxy/proxy.log'
+  log-buffer: '2000'
+  log-buffer-errors: '1000'
+  log-level: 'INFO'
+  logs: 'true'
+  puppetca: 'true'
+  puppet: 'true'
+  puppet-listen-on: 'https'
+  puppet-url: "https://{{ groups['tfm_puppet'][0] }}:8140"
+  puppet-api-timeout: '30'
+  tftp: 'true'
+  tftp-managed: 'true'
+  tftp-listen-on: 'https'
+  tftp-manage-wget: 'true'
+  tftp-root: '/srv/tftp'
+  templates: 'true'
+  httpboot: 'true'
+  http: 'true'

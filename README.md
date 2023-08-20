@@ -1,38 +1,83 @@
-Role Name
+ansible-role-foreman-proxy
 =========
 
-A brief description of the role goes here.
+Ansible role to deploy foreman smart_proxy (theforeman.org)
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+It is designed to be include as a submodule to a project with its siblings :
+
+* `ansible-role-foreman-db`
+* `ansible-role-foreman-puppet`
+* `ansible-role-foreman-proxy` (this one)
+* `ansible-role-foreman-app`
+* `ansible-role-foreman-custom`
+
+`ansible-role-mirror` should help you get started with mirroring needed repositories.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+The role needs some vars (default/main.yml)
+The vars are self-explanatory, to look for answer one could use : foreman-installer --help
+All vars are combined in `tasks/Setup_Options.yml` ( -vv is your friend )
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```
+- hosts: tfm_proxy
+  gather_facts: true
+  vars:
+    oauth_consumer_key: "{{ hostvars[groups['tfm_app'][0]]['oauth_consumer_key'] }}"
+    oauth_consumer_secret: "{{ hostvars[groups['tfm_app'][0]]['oauth_consumer_secret'] }}"
+  roles:
+    - role: foreman-proxy
+    - role: ansible-role-deploy-git-repos
+```
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+#### to deploy some ansible roles `on` the smart_proxy to run them `from` smart_proxy using remote_executions (foreman plugins ansible)
+```
+- hosts: tfm_proxy
+  gather_facts: true
+  roles:
+    - role: ansible-role-deploy-git-repos
+```
+
+#### There is an omapi bug after isc-dhcp-server_4.4.1-2+deb10u1 (Debian 10 Buster), this help : 
+```
+--tags tfm,fixdhcp
+- hosts: tfm_proxy
+  gather_facts: true
+  tasks:
+    - name: fix isc-dhcp-server omapi bug with debian >10
+      block:
+      - name: Download libisc-export1100 package from Buster
+        ansible.builtin.apt:
+          deb: http://mirror.lab.loxda.net/debian-security/pool/updates/main/b/bind9/libisc-export1100_9.11.5.P4+dfsg-5.1+deb10u8_amd64.deb
+      - name: Download libdns-export1104 package from Buster
+        ansible.builtin.apt:
+          deb: http://mirror.lab.loxda.net/debian-security/pool/updates/main/b/bind9/libdns-export1104_9.11.5.P4+dfsg-5.1+deb10u8_amd64.deb
+      - name: Download isc-dhcp-server package from Buster
+        get_url:
+          url: http://mirror.lab.loxda.net/debian/pool/main/i/isc-dhcp/isc-dhcp-server_4.4.1-2+deb10u1_amd64.deb
+          dest: /tmp/isc-dhcp-server_4.4.1-2+deb10u1_amd64.deb
+      - name: Fix isc-dhcp-server version
+        command: dpkg --force-downgrade --force-hold -i /tmp/isc-dhcp-server_4.4.1-2+deb10u1_amd64.deb
+      - name: Hold isc-dhcp-server
+        dpkg_selections: name=isc-dhcp-server selection=hold
+      - name: Restart service isc-dhcp-server
+        service: name=isc-dhcp-server state=restarted
+      when: ansible_distribution == 'Debian' and "ansible_distribution_version" >= "10"
+```      
 
 License
 -------
 
-BSD
+CC-BY-4.0
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Thomas Basset -- hobbyist sysadm <tomm+code@loxda.net>
