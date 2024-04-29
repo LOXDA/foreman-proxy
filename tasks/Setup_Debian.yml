@@ -14,31 +14,31 @@
 - name: Install Puppet Repository
   block:
     - name: Add Public Key
-      ansible.builtin.apt_key:
-        url: http://mirror.lab.loxda.net/keyrings/puppetlabs/keys.d/puppetlabs-keyring.key
+      apt_key:
+        url: https://apt.puppetlabs.com/keyring.gpg
         state: present
     - name: Install Puppet Repo
-      ansible.builtin.apt_repository:
-        repo: deb http://mirror.lab.loxda.net/puppetlabs/ {{ ansible_distribution_release }} {{ puppet_version }}
+      apt_repository:
+        repo: deb https://apt.puppetlabs.com/ {{ ansible_distribution_release }} {{ puppet_version }}
         state: present
         filename: /etc/apt/sources.list.d/{{ puppet_version }}.list
 
-# - name: Install Foreman Repository
-#   block:
-#     - name: Add Public Key
-#       ansible.builtin.apt_key:
-#         url: http://mirror.lab.loxda.net/keyrings/foreman/keys.d/foreman-keyring.key
-#         state: present
-#     - name: Install Foreman Repo
-#       ansible.builtin.apt_repository:
-#         repo: deb http://mirror.lab.loxda.net/foreman/ {{ ansible_distribution_release }} {{ foreman_version }}
-#         state: present
-#         filename: /etc/apt/sources.list.d/foreman.list
-#     - name: Install Foreman Plugin Repo
-#       ansible.builtin.apt_repository:
-#         repo: deb http://mirror.lab.loxda.net/foreman/ plugins {{ foreman_version }}
-#         state: present
-#         filename: /etc/apt/sources.list.d/foreman_plugins.list
+- name: Install Foreman Repository
+  block:
+    - name: Add Public Key
+      apt_key:
+        url: https://deb.theforeman.org/foreman.asc
+        state: present
+    - name: Install Foreman Repo
+      apt_repository:
+        repo: deb https://deb.theforeman.org/ {{ ansible_distribution_release }} {{ foreman_version }}
+        state: present
+        filename: /etc/apt/sources.list.d/foreman.list
+    - name: Install Foreman Plugin Repo
+      apt_repository:
+        repo: deb https://deb.theforeman.org/ plugins {{ foreman_version }}
+        state: present
+        filename: /etc/apt/sources.list.d/foreman_plugins.list
 
 - name: "Install Git"
   ansible.builtin.apt: 
