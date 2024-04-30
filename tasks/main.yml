@@ -11,16 +11,16 @@
 - include_tasks: "Setup_{{ ansible_os_family }}.yml"
 
 # Setup ipxe
-- include_tasks: "ipxe.yml"
+# - include_tasks: "ipxe.yml"
 
 # Setup syslinux-3.86
-- include_tasks: "syslinux386.yml"
+# - include_tasks: "syslinux386.yml"
 
 # Setup discovery
-- include_tasks: "discovery.yml"
+# - include_tasks: "discovery.yml"
 
 # Setup OS ESXi
-- include_tasks: "os_esxi.yml"
+# - include_tasks: "os_esxi.yml"
 
 # Setup OS Windows
-- include_tasks: "os_windows.yml"
+# - include_tasks: "os_windows.yml"
