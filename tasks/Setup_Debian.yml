@@ -137,7 +137,7 @@
         content: |
           *.opn.lab
         owner: puppet
-        group: puppet
+        group: foreman-proxy
         mode: 0664
 
     - name: Restart service foreman-proxy
