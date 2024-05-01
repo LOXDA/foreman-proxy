@@ -131,6 +131,15 @@
       args:
         executable: /bin/bash
 
+    - name: Creating file /etc/puppetlabs/puppet/autosign.conf
+      copy:
+        dest: /etc/puppetlabs/puppet/autosign.conf
+        content: |
+          *.opn.lab
+        owner: puppet
+        group: puppet
+        mode: 0664
+
     - name: Restart service foreman-proxy
       ansible.builtin.service:
         name: foreman-proxy
