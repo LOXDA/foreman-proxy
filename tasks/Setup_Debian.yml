@@ -136,9 +136,9 @@
         dest: /etc/puppetlabs/puppet/autosign.conf
         content: |
           *.opn.lab
-        owner: puppet
-        group: puppet
-        mode: 0664
+        owner: foreman-proxy
+        group: root
+        mode: 0600
 
     - name: Restart service foreman-proxy
       ansible.builtin.service:
