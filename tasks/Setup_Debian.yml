@@ -136,6 +136,15 @@
         dest: /etc/puppetlabs/puppet/autosign.conf
         content: |
           *.opn.lab
+        owner: root
+        group: foreman-proxy
+        mode: 0664
+
+    - name: Creating file /etc/salt/autosign.conf
+      copy:
+        dest: /etc/salt/autosign.conf
+        content: |
+          *.opn.lab
         owner: foreman-proxy
         group: root
         mode: 0600
