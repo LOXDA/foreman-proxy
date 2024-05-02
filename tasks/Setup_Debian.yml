@@ -142,7 +142,7 @@
         owner: foreman-proxy
         group: root
         mode: 0600
-      when: "{{ _salt_test }}"
+      when: _salt_test | bool
 
     - name: "Bootstap Puppet Agent ssl"
       ansible.builtin.shell: |
@@ -151,7 +151,22 @@
         sed -i 's/Group=salt/Group=root/' /lib/systemd/system/salt-master.service
         systemctl daemon-reload
         systemctl restart salt-master.service salt-api.service
-      when: "{{ _salt_test }}"
+        touch /etc/salt/autosign.conf
+        chgrp foreman-proxy /etc/salt/autosign.conf
+        chmod 660 /etc/salt/autosign.conf
+        mkdir -p /srv/salt/_runners
+        apt-get -qy git
+        git clone https://github.com/theforeman/smart_proxy_salt.git /usr/src/smart_proxy_salt
+      when: _salt_test | bool
+
+    - name: Add contents to sudoers
+      lineinfile:
+        path: /etc/sudoers
+        line: |
+          Cmnd_Alias SALT = /usr/bin/salt, /usr/bin/salt-key
+          foreman-proxy ALL = (ALL) NOPASSWD: SALT
+          Defaults:foreman-proxy !requiretty
+      when: _salt_test | bool
 
     - name: Restart service foreman-proxy
       ansible.builtin.service:

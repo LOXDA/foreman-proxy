@@ -104,3 +104,5 @@ foreman_proxy_options:
   templates: 'true'
   httpboot: 'true'
   http: 'true'
+
+_salt_test: false
