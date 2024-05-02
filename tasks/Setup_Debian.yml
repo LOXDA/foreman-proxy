@@ -142,6 +142,16 @@
         owner: foreman-proxy
         group: root
         mode: 0600
+      when: "{{ _salt_test }}"
+
+    - name: "Bootstap Puppet Agent ssl"
+      ansible.builtin.shell: |
+        apt-get -qy install salt-master salt-api
+        sed -i 's/User=salt/User=root/' /lib/systemd/system/salt-master.service
+        sed -i 's/Group=salt/Group=root/' /lib/systemd/system/salt-master.service
+        systemctl daemon-reload
+        systemctl restart salt-master.service salt-api.service
+      when: "{{ _salt_test }}"
 
     - name: Restart service foreman-proxy
       ansible.builtin.service:
