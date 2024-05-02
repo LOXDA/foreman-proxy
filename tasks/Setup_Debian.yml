@@ -117,7 +117,7 @@
     dest: /etc/salt/autosign.conf
     content: |
       *.opn.lab
-    owner: foreman-proxy
+    owner: root
     group: root
     mode: 0600
   when: _salt_test | bool
