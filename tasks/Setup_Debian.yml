@@ -168,7 +168,7 @@
         apt-get -qy install salt-master salt-api
         sed -i 's/User=salt/User=root/' /lib/systemd/system/salt-master.service
         sed -i 's/Group=salt/Group=root/' /lib/systemd/system/salt-master.service
-        sed -i 's/# permissive_pki_access: True/permissive_pki_access: True/' /etc/salt/master.d/foreman.conf
+        # sed -i 's/# permissive_pki_access: True/permissive_pki_access: True/' /etc/salt/master.d/foreman.conf
         systemctl daemon-reload
         systemctl restart salt-master.service salt-api.service
         adduser --no-create-home --disabled-password --gecos '' --shell /bin/false --home / saltuser
