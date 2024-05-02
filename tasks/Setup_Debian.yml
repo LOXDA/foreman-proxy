@@ -44,24 +44,18 @@
   ansible.builtin.apt: 
     name: git 
     force: yes 
-    # update_cache: yes
-    # cache_valid_time: 3600
     allow_unauthenticated: true
 
 - name: "Download Foreman installer package"
   ansible.builtin.apt:
     name: foreman-installer
     force: yes
-    # update_cache: yes
-    # cache_valid_time: 3600
     allow_unauthenticated: true
 
 - name: "Install Puppet Agent"
   ansible.builtin.apt: 
     name: puppet-agent 
     force: yes 
-    # update_cache: yes
-    # cache_valid_time: 3600
     allow_unauthenticated: true
     
 - name: "Bootstap Puppet Agent ssl"
@@ -132,7 +126,7 @@
         executable: /bin/bash
 
     - name: Creating file /etc/puppetlabs/puppet/autosign.conf
-      copy:
+      ansible.builtin.copy:
         dest: /etc/puppetlabs/puppet/autosign.conf
         content: |
           *.opn.lab
@@ -141,7 +135,7 @@
         mode: 0664
 
     - name: Creating file /etc/salt/autosign.conf
-      copy:
+      ansible.builtin.copy:
         dest: /etc/salt/autosign.conf
         content: |
           *.opn.lab
