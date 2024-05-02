@@ -111,6 +111,7 @@
     path: /etc/salt
     state: directory
     mode: '0755'
+  when: _salt_test | bool
 
 - name: SALT test, Creating file /etc/salt/autosign.conf
   ansible.builtin.copy:
