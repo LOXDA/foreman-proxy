@@ -45,7 +45,7 @@
   set_fact:
     foreman_cmd_options: "{{ foreman_cmd_options | list + [ '--foreman-proxy-' + item.key + '=' + item.value ] }}"
   with_dict: "{{ foreman_proxy_options | default({}) }}"
-  # when: foreman_proxy_options is defined
+  when: foreman_proxy_options is defined
 
 - name: "Configure Puppet Options"
   set_fact:

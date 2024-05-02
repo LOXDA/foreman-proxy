@@ -69,7 +69,7 @@ foreman_proxy_options:
   dhcp-omapi-port: '7911'
   dhcp-ping-free-ip: 'true'
   dhcp-option-domain: 'lab.loxda.net'
-  dhcp-ipxe-bootstrap: 'true' # discovery
+  dhcp-ipxe-bootstrap: 'true'
   dhcp-pxefilename: 'pxelinux.0'
   dhcp-gateway: '172.16.203.253'
   dhcp-nameservers: '172.16.203.253'
