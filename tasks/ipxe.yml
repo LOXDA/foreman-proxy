@@ -4,8 +4,6 @@
   ansible.builtin.apt: 
     name: "{{ item }}"
     force: yes 
-    # update_cache: yes
-    # cache_valid_time: 3600
   loop:
     - git
     - liblzma-dev
@@ -13,7 +11,7 @@
 - name: "prepare smart_proxy tftp iPXE"
   ansible.builtin.git:
     clone: true
-    repo: 'http://mirror.lab.loxda.net/git/ipxe/ipxe.git/'
+    repo: 'https://github.com/ipxe/ipxe.git'
     dest: '/tmp/ipxe'
     single_branch: true
     update: true
