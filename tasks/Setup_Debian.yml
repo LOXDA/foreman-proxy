@@ -215,6 +215,12 @@
     state: started
   when: _salt_test | bool
 
+- name: Start service salt-api
+  ansible.builtin.systemd_service:
+    name: salt-api
+    state: started
+  when: _salt_test | bool
+
 - name: SALT, bootstrap local salt-master & salt-api 2/4
   ansible.builtin.shell: |
     git clone https://github.com/SS-archive/salt-states.git /srv/salt
