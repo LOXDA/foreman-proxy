@@ -209,6 +209,39 @@
     systemctl daemon-reload
   when: _salt_test | bool
 
+- name: SALT, bootstrap local salt-master & salt-api 2/4
+  ansible.builtin.shell: |
+    git clone https://github.com/SS-archive/salt-states.git /srv/salt
+  when: _salt_test | bool
+
+- name: Creates directory /srv/salt/_runners
+  ansible.builtin.file:
+    path: /srv/salt/_runners
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  when: _salt_test | bool
+
+- name: Creates directory /usr/share/foreman-proxy/salt/reactors
+  ansible.builtin.file:
+    path: /usr/share/foreman-proxy/salt/reactors
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0775
+  when: _salt_test | bool
+
+- name: SALT, bootstrap local salt-master & salt-api 3/4
+  ansible.builtin.shell: |
+    git clone https://github.com/theforeman/smart_proxy_salt.git /usr/src/smart_proxy_salt
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/foreman_minion_auth.sls /usr/share/foreman-proxy/salt/reactors/
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_file.py /srv/salt/_runners/
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_https.py /srv/salt/_runners/
+    cp /usr/src/smart_proxy_salt/salt/report_upload/foreman_report_upload.sls /usr/share/foreman-proxy/salt/reactors/
+    cp /usr/src/smart_proxy_salt/salt/report_upload/srv/salt/_runners/foreman_report_upload.py /srv/salt/_runners/
+  when: _salt_test | bool
+
 - name: Start service salt-master
   ansible.builtin.systemd_service:
     name: salt-master
@@ -221,28 +254,9 @@
     state: started
   when: _salt_test | bool
 
-- name: SALT, bootstrap local salt-master & salt-api 2/4
-  ansible.builtin.shell: |
-    git clone https://github.com/SS-archive/salt-states.git /srv/salt
-    mkdir -p /srv/salt/_runners
-  when: _salt_test | bool
-
-- name: SALT, bootstrap local salt-master & salt-api 3/4
-  ansible.builtin.shell: |
-    mkdir -p /usr/share/foreman-proxy/salt/reactors
-    mkdir -p /var/lib/foreman-proxy/salt/grains
-    git clone https://github.com/theforeman/smart_proxy_salt.git /usr/src/smart_proxy_salt
-    cp /usr/src/smart_proxy_salt/salt/minion_auth/foreman_minion_auth.sls /usr/share/foreman-proxy/salt/reactors/
-    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_file.py /srv/salt/_runners/
-    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_https.py /srv/salt/_runners/
-    cp /usr/src/smart_proxy_salt/salt/report_upload/foreman_report_upload.sls /usr/share/foreman-proxy/salt/reactors/
-    cp /usr/src/smart_proxy_salt/salt/report_upload/srv/salt/_runners/foreman_report_upload.py /srv/salt/_runners/
-  when: _salt_test | bool
-
 - name: SALT, bootstrap local salt-master & salt-api 4/4
   ansible.builtin.shell: |
     usermod -a -G foreman-proxy root
-    systemctl restart salt-master salt-api
     sleep 10
     salt-run saltutil.sync_all
   when: _salt_test | bool
@@ -283,11 +297,32 @@
         line: 'permissive_pki_access: True'
       when: _salt_test | bool
 
+    - name: Creates directory /var/lib/foreman-proxy/salt/grains
+      ansible.builtin.file:
+        path: /var/lib/foreman-proxy/salt/grains
+        state: directory
+        owner: root
+        group: foreman-proxy
+        mode: 0775
+      when: _salt_test | bool
+
+    - name: Start service salt-master
+      ansible.builtin.systemd_service:
+        name: salt-master
+        state: restarted
+      when: _salt_test | bool
+
+    - name: Start service salt-api
+      ansible.builtin.systemd_service:
+        name: salt-api
+        state: restarted
+      when: _salt_test | bool
+
     - name: Creating file /etc/puppetlabs/puppet/autosign.conf
       ansible.builtin.copy:
         dest: /etc/puppetlabs/puppet/autosign.conf
         content: |
-          *.opn.lab
+          *.{{ inventory_hostname | replace(inventory_hostname_short + '.','') }}
         owner: root
         group: foreman-proxy
         mode: 0664
