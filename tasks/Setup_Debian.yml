@@ -204,13 +204,6 @@
       user: root
   when: _salt_test | bool
 
-- name: SALT, Ensure permissive_pki_access is set
-  ansible.builtin.lineinfile:
-    path: /etc/salt/master.d/foreman.conf
-    regexp: '^# permissive_pki_access'
-    line: 'permissive_pki_access: True'
-  when: _salt_test | bool
-
 - name: SALT, bootstrap local salt-master & salt-api 1/4
   ansible.builtin.shell: |
     systemctl daemon-reload
@@ -276,6 +269,13 @@
         {{ foreman_cmd_options | join(' ') }}
       args:
         executable: /bin/bash
+
+    - name: SALT, Ensure permissive_pki_access is set
+      ansible.builtin.lineinfile:
+        path: /etc/salt/master.d/foreman.conf
+        regexp: '^# permissive_pki_access'
+        line: 'permissive_pki_access: True'
+      when: _salt_test | bool
 
     - name: Creating file /etc/puppetlabs/puppet/autosign.conf
       ansible.builtin.copy:
