@@ -11,6 +11,11 @@
 #     name: ca-certificates
 #     update_cache: yes
 
+- name: Install gpg
+  apt:
+    name: gpg
+    update_cache: yes
+
 - name: Install Puppet Repository
   block:
     - name: Add Public Key
