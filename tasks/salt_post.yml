@@ -1,0 +1,22 @@
+---
+
+- name: SALT, Creates directory /var/lib/foreman-proxy/salt/grains
+  ansible.builtin.file:
+    path: /var/lib/foreman-proxy/salt/grains
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0775
+  when: _salt_test | bool
+
+- name: SALT, Start service salt-master
+  ansible.builtin.systemd_service:
+    name: salt-master
+    state: restarted
+  when: _salt_test | bool
+
+- name: SALT, Start service salt-api
+  ansible.builtin.systemd_service:
+    name: salt-api
+    state: restarted
+  when: _salt_test | bool

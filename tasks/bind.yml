@@ -1,0 +1,21 @@
+---
+
+- name: Creates directory /etc/bind
+  ansible.builtin.file:
+    path: /etc/bind
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0750
+
+- name: Creating file /etc/bind/rndc.key
+  ansible.builtin.copy:
+    dest: /etc/bind/rndc.key
+    content: |
+      key "foreman" {
+              algorithm hmac-md5;
+              secret "tUJGI0Gd5xJokIvxqpo2oA==";
+      };
+    owner: root
+    group: foreman-proxy
+    mode: 0640

@@ -1,0 +1,211 @@
+---
+
+- name: SALT, Create directory /srv/salt
+  ansible.builtin.file:
+    path: /srv/salt
+    state: directory
+  when: _salt_test | bool
+
+- name: SALT, Create directory /srv/pillar
+  ansible.builtin.file:
+    path: /srv/pillar
+    state: directory
+  when: _salt_test | bool
+
+- name: SALT, Create directory /etc/salt
+  ansible.builtin.file:
+    path: /etc/salt
+    state: directory
+  when: _salt_test | bool
+
+- name: SALT, Create directory /etc/salt/master.d
+  ansible.builtin.file:
+    path: /etc/salt/master.d
+    state: directory
+  when: _salt_test | bool
+
+- name: SALT, Creating file /etc/salt/autosign.conf
+  ansible.builtin.copy:
+    dest: /etc/salt/autosign.conf
+    content: |
+      *.opn.lab
+    owner: root
+    group: foreman-proxy
+    mode: 0660
+  when: _salt_test | bool
+
+- name: SALT, Creating file /etc/salt/foreman.yaml
+  ansible.builtin.copy:
+    dest: /etc/salt/foreman.yaml
+    content: |
+      ---
+      :proto: https
+      :host: {{ groups['tfm_app'][0] }}
+      :port: 443
+      :ssl_ca: "/etc/puppetlabs/puppet/ssl/certs/ca.pem"
+      :ssl_cert: "/etc/puppetlabs/puppet/ssl/certs/{{ groups['tfm_proxy_salt'][0] }}.pem"
+      :ssl_key: "/etc/puppetlabs/puppet/ssl/private_keys/{{ groups['tfm_proxy_salt'][0] }}.pem"
+      :timeout: 10
+      :salt: /usr/bin/salt
+      :upload_grains: true
+    owner: root
+    group: root
+    mode: 0644
+  when: _salt_test | bool
+
+- name: SALT, Install salt-master salt-api
+  ansible.builtin.apt: 
+    name: "{{ item }}" 
+    force: yes 
+  loop:
+    - salt-master
+    - salt-api
+  when: _salt_test | bool
+
+- name: SALT, Stop service salt-master
+  ansible.builtin.systemd_service:
+    name: salt-master
+    state: stopped
+  when: _salt_test | bool
+
+- name: SALT, Add the user 'saltuser' with a disabled shell
+  ansible.builtin.user:
+    name: saltuser
+    password: "{{ 'saltpassword' | password_hash('sha512') }}"
+    shell: /bin/false
+    create_home: false
+    home: '/'
+  when: _salt_test | bool
+
+- name: SALT, Ensure salt-master.service is set to User=root
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/salt-master.service
+    regexp: '^User=salt'
+    line: '#User=salt'
+  when: _salt_test | bool
+
+- name: SALT, Ensure salt-master.service is set to Group=root
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/salt-master.service
+    regexp: '^Group=salt'
+    line: '#Group=salt'
+  when: _salt_test | bool
+
+- name: SALT, Creating file /etc/salt/master.d/root.conf
+  ansible.builtin.copy:
+    dest: /etc/salt/master.d/root.conf
+    content: |
+      user: root
+  when: _salt_test | bool
+
+- name: SALT, bootstrap local salt-master & salt-api 1/4
+  ansible.builtin.shell: |
+    systemctl daemon-reload
+  when: _salt_test | bool
+
+# - name: SALT, bootstrap local salt-master & salt-api 2/4
+#   ansible.builtin.shell: |
+#     git clone https://github.com/tbasset/salt-states.git /srv/salt
+#   when: _salt_test | bool
+
+- name: SALT, Creates directory /srv/salt/_runners
+  ansible.builtin.file:
+    path: /srv/salt/_runners
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  when: _salt_test | bool
+
+# - name: SALT, bootstrap local salt-master & salt-api 3/4
+#   ansible.builtin.shell: |
+#     git clone https://github.com/tbasset/salt-pillar.git /srv/pillar
+#   when: _salt_test | bool
+
+- name: SALT, Creates directory /usr/share/foreman-proxy/salt/reactors
+  ansible.builtin.file:
+    path: /usr/share/foreman-proxy/salt/reactors
+    state: directory
+    owner: root
+    group: foreman-proxy
+    mode: 0775
+  when: _salt_test | bool
+
+- name: SALT, bootstrap local salt-master & salt-api 4/4
+  ansible.builtin.shell: |
+    git clone https://github.com/theforeman/smart_proxy_salt.git /usr/src/smart_proxy_salt
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/foreman_minion_auth.sls /usr/share/foreman-proxy/salt/reactors/
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_file.py /srv/salt/_runners/
+    cp /usr/src/smart_proxy_salt/salt/minion_auth/srv/salt/_runners/foreman_https.py /srv/salt/_runners/
+    cp /usr/src/smart_proxy_salt/salt/report_upload/foreman_report_upload.sls /usr/share/foreman-proxy/salt/reactors/
+    cp /usr/src/smart_proxy_salt/salt/report_upload/srv/salt/_runners/foreman_report_upload.py /srv/salt/_runners/
+  when: _salt_test | bool
+
+- name: SALT, Add contents to sudoers
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/98_foreman_salt
+    content: |
+      Cmnd_Alias SALT = /usr/bin/salt, /usr/bin/salt-key
+      foreman-proxy ALL = (ALL) NOPASSWD: SALT
+      Defaults:foreman-proxy !requiretty
+    owner: root
+    group: root
+    mode: 0640
+  when: _salt_test | bool
+
+- name: SALT, salt config with gitfs
+  ansible.builtin.copy:
+    dest: /etc/salt/master.d/foreman_states.conf
+    content: |
+      verify_env: True
+      file_ignore_regex:
+        - '/\.svn($|/)'
+        - '/\.git($|/)'
+      fileserver_backend:
+        - git
+        - roots
+      gitfs_remotes:
+        - https://github.com/tbasset/salt-states.git
+      gitfs_ssl_verify: True
+      reactor:
+        - 'minion_start':
+          - salt://reactor/start_debian_users.sls    # Things to do when a ubuntu minion starts
+          - salt://reactor/start_debian_packages.sls # Things to do when a ubuntu minion starts
+          - salt://reactor/start_ubuntu_users.sls      # Things to do when a Raspbian minion starts
+          - salt://reactor/start_ubuntu_packages.sls   # Things to do when a Raspbian minion starts
+          - salt://reactor/sync_grains.sls             # Sync custom grains
+    owner: root
+    group: foreman-proxy
+    mode: 0640
+  when: _salt_test | bool
+
+- name: SALT, salt config with gitfs
+  ansible.builtin.copy:
+    dest: /etc/salt/master.d/foreman_pillar.conf
+    content: |
+      ext_pillar:
+        - git:
+          - master https://github.com/tbasset/salt-pillar.git
+    owner: root
+    group: foreman-proxy
+    mode: 0640
+  when: _salt_test | bool
+
+- name: SALT, Start service salt-master
+  ansible.builtin.systemd_service:
+    name: salt-master
+    state: started
+  when: _salt_test | bool
+
+- name: Start service salt-api
+  ansible.builtin.systemd_service:
+    name: salt-api
+    state: started
+  when: _salt_test | bool
+
+- name: SALT, sync_all reactors
+  ansible.builtin.shell: |
+    usermod -a -G foreman-proxy root
+    sleep 10
+    salt-run saltutil.sync_all
+  when: _salt_test | bool
