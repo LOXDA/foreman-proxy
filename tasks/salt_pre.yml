@@ -169,10 +169,6 @@
       gitfs_ssl_verify: True
       reactor:
         - 'minion_start':
-          - salt://reactor/start_debian_users.sls    # Things to do when a ubuntu minion starts
-          - salt://reactor/start_debian_packages.sls # Things to do when a ubuntu minion starts
-          - salt://reactor/start_ubuntu_users.sls      # Things to do when a Raspbian minion starts
-          - salt://reactor/start_ubuntu_packages.sls   # Things to do when a Raspbian minion starts
           - salt://reactor/sync_grains.sls             # Sync custom grains
     owner: root
     group: foreman-proxy
