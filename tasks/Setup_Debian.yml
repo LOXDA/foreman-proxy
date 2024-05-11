@@ -92,10 +92,10 @@
     state: present
 
 # Include plugins: bind
-- include_tasks: "bind.yml"
+- include_tasks: "plugin_bind.yml"
 
 # Include plugins: salt
-- include_tasks: "salt_pre.yml"
+- include_tasks: "plugin_salt_pre.yml"
   when: _salt_test | bool
 
 - name: "Install and Configure Foreman PROXY"
@@ -118,17 +118,6 @@
       args:
         executable: /bin/bash
 
-    - name: SALT, Ensure permissive_pki_access is set
-      ansible.builtin.lineinfile:
-        path: /etc/salt/master.d/foreman.conf
-        regexp: '^# permissive_pki_access'
-        line: 'permissive_pki_access: True'
-      when: _salt_test | bool
-
-    # Include plugins: salt
-    - include_tasks: "salt_post.yml"
-      when: _salt_test | bool
-
     - name: Creating file /etc/puppetlabs/puppet/autosign.conf
       ansible.builtin.copy:
         dest: /etc/puppetlabs/puppet/autosign.conf
@@ -142,6 +131,10 @@
       ansible.builtin.service:
         name: foreman-proxy
         state: restarted
+
+# Include plugins: salt
+- include_tasks: "plugin_salt_post.yml"
+  when: _salt_test | bool
 
 - name: Creates directory /etc/ansible
   ansible.builtin.file:

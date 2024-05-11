@@ -1,5 +1,12 @@
 ---
 
+- name: SALT, Ensure permissive_pki_access is set
+  ansible.builtin.lineinfile:
+    path: /etc/salt/master.d/foreman.conf
+    regexp: '^# permissive_pki_access'
+    line: 'permissive_pki_access: True'
+  when: _salt_test | bool
+
 - name: SALT, Creates directory /var/lib/foreman-proxy/salt/grains
   ansible.builtin.file:
     path: /var/lib/foreman-proxy/salt/grains
