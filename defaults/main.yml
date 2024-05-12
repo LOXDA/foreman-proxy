@@ -15,6 +15,9 @@ foreman_proxy_plugins:
   - remote-execution-script
   - discovery
 
+plugin_bind: false
+plugin_salt: false
+
 # configure options
 foreman_options: {}
 foreman_plugin_options: {}
@@ -104,5 +107,3 @@ foreman_proxy_options:
   templates: 'true'
   httpboot: 'true'
   http: 'true'
-
-_salt_test: false

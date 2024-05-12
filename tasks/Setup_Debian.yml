@@ -93,10 +93,11 @@
 
 # Include plugins: bind
 - include_tasks: "plugin_bind.yml"
+  when: plugin_bind | bool
 
 # Include plugins: salt
 - include_tasks: "plugin_salt_pre.yml"
-  when: _salt_test | bool
+  when: plugin_salt | bool
 
 - name: "Install and Configure Foreman PROXY"
   block:
@@ -106,7 +107,7 @@
         argv_start:
         - foreman-installer
         - --no-enable-foreman
-          - --no-enable-puppet
+        - --no-enable-puppet
         - --no-enable-foreman-plugin-puppet 
         - --no-enable-foreman-cli-puppet
         - --enable-foreman-proxy
@@ -134,7 +135,7 @@
 
 # Include plugins: salt
 - include_tasks: "plugin_salt_post.yml"
-  when: _salt_test | bool
+  when: plugin_salt | bool
 
 - name: Creates directory /etc/ansible
   ansible.builtin.file:
