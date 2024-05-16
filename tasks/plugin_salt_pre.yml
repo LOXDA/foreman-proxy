@@ -103,11 +103,6 @@
     systemctl daemon-reload
   when: _salt_test | bool
 
-# - name: SALT, bootstrap local salt-master & salt-api 2/4
-#   ansible.builtin.shell: |
-#     git clone https://github.com/tbasset/salt-states.git /srv/salt
-#   when: _salt_test | bool
-
 - name: SALT, Creates directory /srv/salt/_runners
   ansible.builtin.file:
     path: /srv/salt/_runners
@@ -116,11 +111,6 @@
     group: root
     mode: 0750
   when: _salt_test | bool
-
-# - name: SALT, bootstrap local salt-master & salt-api 3/4
-#   ansible.builtin.shell: |
-#     git clone https://github.com/tbasset/salt-pillar.git /srv/pillar
-#   when: _salt_test | bool
 
 - name: SALT, Creates directory /usr/share/foreman-proxy/salt/reactors
   ansible.builtin.file:
@@ -169,7 +159,7 @@
       gitfs_ssl_verify: True
       reactor:
         - 'minion_start':
-          - salt://reactor/sync_grains.sls             # Sync custom grains
+          - salt://reactor/sync_grains.sls
     owner: root
     group: foreman-proxy
     mode: 0640
