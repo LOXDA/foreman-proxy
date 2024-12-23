@@ -6,14 +6,15 @@
 #       echo never > /sys/kernel/mm/transparent_hugepage/defrag
 #       echo 0 > /proc/sys/vm/compaction_proactiveness
 
-# - name: "Update CA Certificates"
-#   ansible.builtin.apt:
-#     name: ca-certificates
-#     update_cache: yes
-
 - name: Install gpg
   apt:
     name: gpg
+    update_cache: yes
+
+- name: "Install Git"
+  ansible.builtin.apt:
+    name: git
+    force: yes
     update_cache: yes
 
 - name: Install Puppet Repository
@@ -26,7 +27,7 @@
       apt_repository:
         repo: deb https://apt.puppetlabs.com/ {{ ansible_distribution_release }} {{ puppet_version }}
         state: present
-        filename: /etc/apt/sources.list.d/{{ puppet_version }}.list
+        filename: '{{ puppet_version }}'
 
 - name: Install Foreman Repository
   block:
@@ -38,31 +39,27 @@
       apt_repository:
         repo: deb https://deb.theforeman.org/ {{ ansible_distribution_release }} {{ foreman_version }}
         state: present
-        filename: /etc/apt/sources.list.d/foreman.list
+        filename: 'foreman'
     - name: Install Foreman Plugin Repo
       apt_repository:
         repo: deb https://deb.theforeman.org/ plugins {{ foreman_version }}
         state: present
-        filename: /etc/apt/sources.list.d/foreman_plugins.list
+        filename: 'foreman_plugins'
 
-- name: "Install Git"
-  ansible.builtin.apt: 
-    name: git 
-    force: yes 
-    allow_unauthenticated: true
-
-- name: "Download Foreman installer package"
-  ansible.builtin.apt:
+- name: Download Foreman installer package
+  apt:
     name: foreman-installer
+    force: yes
+    update_cache: yes
+    cache_valid_time: 3600
+    state: present
+
+- name: "Install Puppet Agent"
+  ansible.builtin.apt:
+    name: puppet-agent
     force: yes
     allow_unauthenticated: true
 
-- name: "Install Puppet Agent"
-  ansible.builtin.apt: 
-    name: puppet-agent 
-    force: yes 
-    allow_unauthenticated: true
-    
 - name: "Bootstap Puppet Agent ssl"
   ansible.builtin.shell: |
     /opt/puppetlabs/bin/puppet config set server {{ groups['tfm_puppet'][0] }} --section main
@@ -74,12 +71,12 @@
       ansible.builtin.shell: |
         echo quit | openssl s_client -showcerts -servername server -connect {{ groups['tfm_puppet'][0] }}:8140 > /usr/local/share/ca-certificates/{{ groups['tfm_puppet'][0] }}-CA.crt 2>&1
       args:
-        executable: /bin/bash  
+        executable: /bin/bash
     - name: "Install Puppet Root CA"
       ansible.builtin.shell: |
         update-ca-certificates --fresh
       args:
-        executable: /bin/bash  
+        executable: /bin/bash
 
 - name: Ensure group "puppet" exists
   ansible.builtin.group:
@@ -108,7 +105,7 @@
         - foreman-installer
         - --no-enable-foreman
         - --no-enable-puppet
-        - --no-enable-foreman-plugin-puppet 
+        - --no-enable-foreman-plugin-puppet
         - --no-enable-foreman-cli-puppet
         - --enable-foreman-proxy
         - --puppet-group=root
