@@ -14,6 +14,7 @@ foreman_proxy_plugins:
   - ansible
   - remote-execution-script
   - discovery
+  # - monitoring
 
 plugin_bind: false
 plugin_salt: false
@@ -57,13 +58,13 @@ foreman_proxy_plugin_options:
   discovery-listen-on: 'https'
 
 foreman_proxy_options:
+  foreman-base-url: "{{ foreman_url_app }}"
   oauth-consumer-key: "{{oauth_consumer_key|default(omit)}}"
   oauth-consumer-secret: "{{oauth_consumer_secret|default(omit)}}"
   manage-puppet-group: 'true'
   register-in-foreman: 'true'
   registered-name: "{{ inventory_hostname }}"
   trusted-hosts: "{{ groups['tfm_app'][0] }}"
-  foreman-base-url: "https://{{ groups['tfm_app'][0] }}"
   templates-listen-on: 'both'
   dhcp: 'true'
   dhcp-managed: 'true'
@@ -107,3 +108,16 @@ foreman_proxy_options:
   templates: 'true'
   httpboot: 'true'
   http: 'true'
+
+_salt_test: false
+
+monitoring_icinga2:
+  enabled: true
+  server: icinga2.localdomain
+  verify_ssl: true
+  api_port: 5665
+  api_user: foreman
+  api_password: foreman
+  api_cacert: /etc/puppetlabs/puppet/ssl/certs/ca.pem
+  # api_usercert: /etc/foreman-proxy/monitoring/foreman.crt
+  # api_userkey: /etc/foreman-proxy/monitoring/foreman.key

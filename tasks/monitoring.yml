@@ -1,0 +1,6 @@
+---
+
+- name: Writing monitoring_icinga2.yml settings
+  ansible.builtin.copy:
+    dest: /etc/foreman-proxy/settings.d/monitoring_icinga2.yml
+    content:  "{{ monitoring_icinga2 | to_nice_yaml }}"

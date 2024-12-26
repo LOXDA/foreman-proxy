@@ -88,13 +88,13 @@
     name: foreman-proxy
     state: present
 
-# Include plugins: bind
-- include_tasks: "plugin_bind.yml"
-  when: plugin_bind | bool
-
 # Include plugins: salt
 - include_tasks: "plugin_salt_pre.yml"
   when: plugin_salt | bool
+
+# Setup discovery
+# - include_tasks: "discovery.yml"
+#   when: plugin_discovery | bool
 
 - name: "Install and Configure Foreman PROXY"
   block:
@@ -124,6 +124,14 @@
         owner: root
         group: foreman-proxy
         mode: 0664
+
+    # Include plugins: bind
+    - include_tasks: "plugin_bind.yml"
+      when: plugin_bind | bool
+
+    # Setup monitoring
+    - include_tasks: "monitoring.yml"
+      when: plugin_monitoring | bool
 
     - name: Restart service foreman-proxy
       ansible.builtin.service:
