@@ -27,8 +27,7 @@
 - name: SALT, Creating file /etc/salt/autosign.conf
   ansible.builtin.copy:
     dest: /etc/salt/autosign.conf
-    content: |
-      *.opn.lab
+    content: ''
     owner: root
     group: foreman-proxy
     mode: 0660
@@ -53,10 +52,46 @@
     mode: 0644
   when: _salt_test | bool
 
+# mkdir -p /etc/apt/keyrings
+# curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | sudo tee /etc/apt/keyrings/salt-archive-keyring.pgp
+# curl -fsSL https://github.com/saltstack/salt-install-guide/releases/latest/download/salt.sources | sudo tee /etc/apt/sources.list.d/salt.sources
+# cat > /etc/apt/preferences.d/salt-pin-1001 <<EOF
+# Package: salt-*
+# Pin: version 3006.*
+# Pin-Priority: 1001
+# EOF
+
+- name: Install Saltstack Repository
+  block:
+    - name: Add Public Key
+      ansible.builtin.apt_key:
+        url: https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public
+        state: present
+    - name: Install Saltstack Repo
+      ansible.builtin.apt_repository:
+        repo: deb https://packages.broadcom.com/artifactory/saltproject-deb stable main
+        state: present
+        filename: 'salt'
+    - name: SALT, Creating file /etc/apt/preferences.d/salt-pin-1001
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/salt-pin-1001
+        content: |
+          Package: salt-*
+          Pin: version 3006.*
+          Pin-Priority: 1001
+        owner: root
+        group: root
+        mode: 0644
+      when: _salt_test | bool
+
+  when: _salt_test | bool
+
 - name: SALT, Install salt-master salt-api
   ansible.builtin.apt: 
     name: "{{ item }}" 
-    force: yes 
+    update_cache: yes
+    # force: yes
+    state: latest
   loop:
     - salt-master
     - salt-api
@@ -66,6 +101,13 @@
   ansible.builtin.systemd_service:
     name: salt-master
     state: stopped
+  when: _salt_test | bool
+
+- name: SALT, Add symlink to debian path salt pki
+  ansible.builtin.file:
+    src: /var/lib/salt/pki
+    dest: /etc/salt/pki
+    state: link
   when: _salt_test | bool
 
 - name: SALT, Add the user 'saltuser' with a disabled shell
