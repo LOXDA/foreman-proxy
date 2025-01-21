@@ -10,11 +10,17 @@
 # Setup/install tasks.
 - include_tasks: "Setup_{{ ansible_os_family }}.yml"
 
-# Setup ipxe
-# - include_tasks: "ipxe.yml"
+- name: Check /srv/tftp
+  stat:
+    path: /srv/tftp
+  register: path_srv_tftp
 
+# Setup ipxe
+- include_tasks: "ipxe.yml"
+  when: path_srv_tftp.stat.exists
 # Setup syslinux-3.86
-# - include_tasks: "syslinux386.yml"
+- include_tasks: "syslinux386.yml"
+  when: path_srv_tftp.stat.exists
 
 # Setup OS ESXi
 # - include_tasks: "os_esxi.yml"

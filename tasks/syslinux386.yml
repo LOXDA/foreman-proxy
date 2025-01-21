@@ -4,7 +4,7 @@
 
 - name: Download syslinux-3.86.tar.gz archive from mirror
   get_url:
-    url: http://mirror.lab.loxda.net/foreman/syslinux-3.86.tar.gz
+    url: https://cdn.kernel.org/pub/linux/utils/boot/syslinux/3.xx/syslinux-3.86.tar.gz
     dest: /tmp/syslinux-3.86.tar.gz
 
 - name: "Prepare pxelinux.0 & *.c32 from syslinux-3.86"

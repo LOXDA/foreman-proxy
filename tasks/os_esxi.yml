@@ -27,27 +27,32 @@
     esxipath: "/srv/tftp/esxi"
     os_esxi_medium:
 
-      - name: "ESXi-6.5.0-14320405"
-        file: "ESXi-6.5.0-14320405.iso"
+      # - name: "ESXi-6.5.0-14320405"
+      #   file: "ESXi-6.5.0-14320405.iso"
+      #   nfshost: "172.16.202.10"
+      #   nfspath: "/nfs/ESXi"
+
+      # - name: "ESXi-6.7.0-15160138"
+      #   file: "ESXi-6.7.0-15160138.iso"
+      #   nfshost: "172.16.202.10"
+      #   nfspath: "/nfs/ESXi"
+
+      # - name: "ESXi-7.0.1-16850804"
+      #   file: "ESXi-7.0.1-16850804.iso"
+      #   nfshost: "172.16.202.10"
+      #   nfspath: "/nfs/ESXi"
+
+      - name: "ESXi-7.0.3-21424296"
+        file: "ESXi-7.0.3-21424296.iso"
         nfshost: "172.16.202.10"
         nfspath: "/nfs/ESXi"
 
-      - name: "ESXi-6.7.0-15160138"
-        file: "ESXi-6.7.0-15160138.iso"
+      - name: "ESXi-7.0.3-23794027"
+        file: "ESXi-7.0.3-23794027.iso"
         nfshost: "172.16.202.10"
         nfspath: "/nfs/ESXi"
 
-      - name: "ESXi-7.0.1-16850804"
-        file: "ESXi-7.0.1-16850804.iso"
-        nfshost: "172.16.202.10"
-        nfspath: "/nfs/ESXi"
-
-      - name: "ESXi-7.0.3-19193900"
-        file: "ESXi-7.0.3-19193900.iso"
-        nfshost: "172.16.202.10"
-        nfspath: "/nfs/ESXi"
-
-      - name: "ESXi-8.0.1-21495797"
-        file: "ESXi-8.0.1-21495797.iso"
+      - name: "ESXi-8.0.3-24022510"
+        file: "ESXi-8.0.3-24022510.iso"
         nfshost: "172.16.202.10"
         nfspath: "/nfs/ESXi"
