@@ -19,6 +19,13 @@ foreman_proxy_plugins:
 plugin_bind: false
 plugin_salt: false
 
+puppet_repo_key: https://apt.puppetlabs.com/keyring.gpg
+puppet_repo_url: deb https://apt.puppetlabs.com/ {{ ansible_distribution_release }} {{ puppet_version }}
+foreman_repo_key: https://deb.theforeman.org/foreman.asc
+foreman_repo_url: deb https://deb.theforeman.org/ {{ ansible_distribution_release }} {{ foreman_version }}
+plugins_repo_key: https://deb.theforeman.org/foreman.asc
+plugins_repo_url: deb https://deb.theforeman.org/ plugins {{ foreman_version }}
+
 # configure options
 foreman_options: {}
 foreman_plugin_options: {}

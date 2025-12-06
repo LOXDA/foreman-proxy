@@ -103,12 +103,12 @@
     state: stopped
   when: _salt_test | bool
 
-- name: SALT, Add symlink to debian path salt pki
-  ansible.builtin.file:
-    src: /var/lib/salt/pki
-    dest: /etc/salt/pki
-    state: link
-  when: _salt_test | bool
+#- name: SALT, Add symlink to debian path salt pki
+#  ansible.builtin.file:
+#    src: /var/lib/salt/pki
+#    dest: /etc/salt/pki
+#    state: link
+#  when: _salt_test | bool
 
 - name: SALT, Add the user 'saltuser' with a disabled shell
   ansible.builtin.user:

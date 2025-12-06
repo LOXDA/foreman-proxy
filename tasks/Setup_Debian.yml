@@ -36,11 +36,11 @@
   block:
     - name: Add Public Key
       ansible.builtin.apt_key:
-        url: https://apt.puppetlabs.com/keyring.gpg
+        url: "{{ puppet_repo_key}}"
         state: present
     - name: Install Puppet Repo
       ansible.builtin.apt_repository:
-        repo: deb https://apt.puppetlabs.com/ {{ ansible_distribution_release }} {{ puppet_version }}
+        repo: "{{ puppet_repo_url }}"
         state: present
         filename: '{{ puppet_version }}'
 
@@ -48,16 +48,16 @@
   block:
     - name: Add Public Key
       ansible.builtin.apt_key:
-        url: https://deb.theforeman.org/foreman.asc
+        url: "{{ foreman_repo_key }}"
         state: present
     - name: Install Foreman Repo
       ansible.builtin.apt_repository:
-        repo: deb https://deb.theforeman.org/ {{ ansible_distribution_release }} {{ foreman_version }}
+        repo: "{{ foreman_repo_url }}"
         state: present
         filename: 'foreman'
     - name: Install Foreman Plugin Repo
       ansible.builtin.apt_repository:
-        repo: deb https://deb.theforeman.org/ plugins {{ foreman_version }}
+        repo: 
         state: present
         filename: 'foreman_plugins'
 
